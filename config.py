@@ -6,10 +6,10 @@ server = 'irc.freenode.net'
 port = 6667
 
 #channels to connect to (comma as delimiter)
-channels = '#channel1,#channel2'
+channels = '##ihpbot-test-channel'
 
 #bot nick
-nickname = 'change_bot_nick'
+nickname = 'ihpbot'
 
 #command must start with:
 command_prefix = '%'

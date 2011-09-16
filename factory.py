@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2011 IgorPopov
+# Copyright 2011 Igor Popov
 #
 # This file is part of ihpbot, which is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,11 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import imp
+import inspect
 from twisted.internet import reactor, protocol
 from twisted.words.protocols import irc
+
 import config
+import createdb
+import commands
+
+###
+if not os.path.exists('db/ihpbot.sqlite'):
+    createdb.start()
+###
 
 class Bot(irc.IRCClient):
+    def __init__(self):
+        self.command = ""
+
     def _get_nickname(self):
         return self.factory.nickname
     nickname = property(_get_nickname)
@@ -31,13 +45,29 @@ class Bot(irc.IRCClient):
 
     def joined(self, channel):
         print "Joined %s." % channel
+    
+    def send_reply(self, data, user, channel):
+        target = channel if channel.startswith('#') else user
+        self.msg(target, data)
+        print config.nickname + " > (" + target + "): " + data
 
     def privmsg(self, user, channel, msg):
         username = user.split('!')[0]
         print username + ": " + msg
         if ( msg[0] == config.command_prefix ):
-            self.factory.command = msg[1:]
-            self.factory.process_command(username, ( channel ))
+            self.command = msg[1:]
+            self.process_command(username, ( channel ))
+
+    def evalCommand(self, commandname, user, channel):
+        imp.reload(commands)
+        command_function=getattr(commands, commandname, None)
+        if command_function != None:
+            if inspect.isfunction(command_function):
+                command_function(self, user, channel)
+    
+    def process_command(self, user, channel):
+        command = (self.command).split()
+        self.evalCommand(command[0].lower(), user, channel)
 
 class BotFactory(protocol.ClientFactory):
     protocol = Bot
@@ -45,7 +75,6 @@ class BotFactory(protocol.ClientFactory):
     def __init__(self, channels, nickname=config.nickname):
         self.channels = channels
         self.nickname = nickname
-        self.command = ""
 
     def clientConnectionLost(self, connector, reason):
         print "Connection lost. Reason: %s" % reason
@@ -53,9 +82,6 @@ class BotFactory(protocol.ClientFactory):
 
     def clientConnectionFailed(self, connector, reason):
         print "Connection failed. Reason: %s" % reason
-    
-    def process_command(self, user, channel):
-        command = (self.command).split()
 
 if __name__ == "__main__":
     reactor.connectTCP(config.server, config.port, BotFactory(config.channels.split(',')))
