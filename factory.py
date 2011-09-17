@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2011 Igor Popov
+# Copyright 2011 Popov Igor
 #
 # This file is part of ihpbot, which is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,6 +68,9 @@ class Bot(irc.IRCClient):
     def process_command(self, user, channel):
         command = (self.command).split()
         self.evalCommand(command[0].lower(), user, channel)
+    
+    def Admin(self, user, channel):
+        return True    #send names required
 
 class BotFactory(protocol.ClientFactory):
     protocol = Bot

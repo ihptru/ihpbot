@@ -1,4 +1,4 @@
-# Copyright 2011 Igor Popov
+# Copyright 2011 Popov Igor
 #
 # This file is part of ihpbot, which is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 
 import os
 import sqlite3
+import config
 
 def start():
     try:
@@ -23,4 +24,64 @@ def start():
     except:
         print("Error! Can not create a directory, check permissions and try again")
         return
-    print("Creating database ...")
+    print("Creating databases")
+    msgs()
+    last_answer()
+    correct_response()
+    incorrect_response()
+
+def msgs():
+    conn = sqlite3.connect('db/ihpbot.sqlite')
+    cur = conn.cursor()
+    for channel in config.channels.replace('#','').split(','):
+        print "..."
+        sql = """CREATE TABLE "msg_"""+channel+"""" (
+            uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
+            message VARCHAR NOT NULL
+            )        
+        """
+        cur.execute(sql)
+        conn.commit()
+    cur.close()
+
+def last_answer():
+    print "..."
+    conn = sqlite3.connect('db/ihpbot.sqlite')
+    cur = conn.cursor()
+    sql = """CREATE TABLE last_answer (
+        uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
+        question VARCHAR NOT NULL,
+        answer VARCHAR NOT NULL
+        )
+    """
+    cur.execute(sql)
+    conn.commit()
+    cur.close()
+
+def correct_response():
+    print "..."
+    conn = sqlite3.connect('db/ihpbot.sqlite')
+    cur = conn.cursor()
+    sql = """CREATE TABLE correct_response (
+        uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
+        question VARCHAR NOT NULL,
+        answer VARCHAR NOT NULL
+        )
+    """
+    cur.execute(sql)
+    conn.commit()
+    cur.close()
+
+def incorrect_response():
+    print "..."
+    conn = sqlite3.connect('db/ihpbot.sqlite')
+    cur = conn.cursor()
+    sql = """CREATE TABLE incorrect_response (
+        uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
+        question VARCHAR NOT NULL,
+        answer VARCHAR NOT NULL
+        )
+    """
+    cur.execute(sql)
+    conn.commit()
+    cur.close()
