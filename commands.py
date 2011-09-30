@@ -154,4 +154,3 @@ def help(self, user, channel):
     command = (self.command).split()
     if ( len(command) == 1 ):
         self.send_reply( ("I can't help you..."), user, channel)
-        

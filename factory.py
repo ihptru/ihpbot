@@ -31,8 +31,15 @@ if not os.path.exists('db/ihpbot.sqlite'):
 ###
 
 class Bot(irc.IRCClient):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.command = ""
+        self.got_names = ""
+    
+    def names(self, channel):
+        self.sendLine('NAMES %s' % channel)
+
+    def irc_RPL_NAMREPLY(self, *nargs):
+        self.got_names = nargs[1][-1]
 
     def _get_nickname(self):
         return self.factory.nickname
@@ -45,7 +52,7 @@ class Bot(irc.IRCClient):
 
     def joined(self, channel):
         print "Joined %s." % channel
-    
+
     def send_reply(self, data, user, channel):
         target = channel if channel.startswith('#') else user
         self.msg(target, data)
@@ -70,7 +77,13 @@ class Bot(irc.IRCClient):
         self.evalCommand(command[0].lower(), user, channel)
     
     def Admin(self, user, channel):
-        return True    #send names required
+        self.names(channel)
+        nicklist = self.got_names.split()
+        if ( '+'+user in nicklist or '@'+user in nicklist or '%'+user in nicklist ):
+            return True
+        else:
+            self.send_reply( ("No rights!"), user, channel )
+            return False
 
 class BotFactory(protocol.ClientFactory):
     protocol = Bot
