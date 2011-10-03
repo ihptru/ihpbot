@@ -20,6 +20,7 @@ import imp
 import inspect
 from twisted.internet import reactor, protocol
 from twisted.words.protocols import irc
+import time
 
 import config
 import createdb
@@ -31,7 +32,7 @@ if not os.path.exists('db/ihpbot.sqlite'):
 ###
 
 class Bot(irc.IRCClient):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         self.command = ""
         self.got_names = ""
     

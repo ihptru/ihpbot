@@ -70,6 +70,7 @@ def incorrect(self, user, channel):
         """
         cur.execute(sql)
         conn.commit()
+    print "Oops!"
     cur.close()
 
 def delete_correct(self, user, channel):
@@ -145,10 +146,61 @@ def delete_incorrect(self, user, channel):
         self.send_reply( ("Too many matches..."), user, channel)
 
 def add_correct(self, user, channel):
-    pass
+    if not self.Admin(user, channel):
+        return
+    command = (self.command).split()
+    if ( len(command) < 3 ):
+        self.send_reply( ("Usage: " + config.command_prefix + "add_correct {question} {answer}"), user, channel)
+        return
+    try:
+        question_answer = " ".join(command[1:])
+        question = question_answer.split('} {')[0].replace('{','').strip()
+        answer = question_answer.split('} {')[1].replace('}','').strip()
+    except Exception as e:
+        print "add_correct(): ", e
+        return
+    conn = sqlite3.connect('db/ihpbot.sqlite')
+    cur = conn.cursor()
+    sql = """INSERT INTO correct_response
+            (question,answer)
+            VALUES
+            (
+            '"""+question+"""','"""+answer+"""'
+            )
+    """
+    cur.execute(sql)
+    conn.commit()
+    print "add_correct(): Added successfully"
+    cur.close()
+    
 
 def add_incorrect(self, user, channel):
-    pass
+    if not self.Admin(user, channel):
+        return
+    command = (self.command).split()
+    if ( len(command) < 3 ):
+        self.send_reply( ("Usage: " + config.command_prefix + "add_incorrect {question} {answer}"), user, channel)
+        return
+    try:
+        question_answer = " ".join(command[1:])
+        question = question_answer.split('} {')[0].replace('{','').strip()
+        answer = question_answer.split('} {')[1].replace('}','').strip()
+    except Exception as e:
+        print "add_incorrect(): ", e
+        return
+    conn = sqlite3.connect('db/ihpbot.sqlite')
+    cur = conn.cursor()
+    sql = """INSERT INTO incorrect_response
+            (question,answer)
+            VALUES
+            (
+            '"""+question+"""','"""+answer+"""'
+            )
+    """
+    cur.execute(sql)
+    conn.commit()
+    print "add_incorrect(): Added successfully"
+    cur.close()
 
 def help(self, user, channel):
     command = (self.command).split()

@@ -6,7 +6,7 @@ server = 'irc.freenode.net'
 port = 6667
 
 #channels to connect to (comma as delimiter)
-channels = '##ihpbot-test-channel'
+channels = '##ihpbot-test-channel,#orabot-test-channel'
 
 #bot nick
 nickname = 'ihpbot'
