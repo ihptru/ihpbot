@@ -59,6 +59,9 @@ class Bot(irc.IRCClient):
         self.msg(target, data)
         print config.nickname + " > (" + target + "): " + data
 
+    def send_notice(self, data, user):
+        self.sendLine( ("NOTICE %s :%s")  % (user,data))
+
     def privmsg(self, user, channel, msg):
         username = user.split('!')[0]
         print username + ": " + msg

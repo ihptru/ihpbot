@@ -21,7 +21,8 @@ def correct(self, user, channel):
         return
     command = (self.command).split()
     if ( len(command) > 1 ):
-        self.send_reply( ("Usage: " + config.command_prefix + "correct"), user, channel)
+        usage = "Usage: " + config.command_prefix + "correct"
+        self.send_notice(usage, user)
         return
     conn = sqlite3.connect('db/ihpbot.sqlite')
     cur = conn.cursor()
@@ -31,7 +32,8 @@ def correct(self, user, channel):
     records = cur.fetchall()
     conn.commit()
     if ( len(records) == 0 ):
-        self.send_reply( ("Nothing to confirm..."), user, channel)
+        message = "Nothing to confirm..."
+        self.send_notice(message, user)
     elif ( len(records) == 1 ):
         sql = """INSERT INTO correct_response
                 (question,answer)
@@ -42,6 +44,7 @@ def correct(self, user, channel):
         """
         cur.execute(sql)
         conn.commit()
+    self.send_notice("Done", user)
     cur.close()
 
 def incorrect(self, user, channel):
@@ -49,7 +52,8 @@ def incorrect(self, user, channel):
         return
     command = (self.command).split()
     if ( len(command) > 1 ):
-        self.send_reply( ("Usage: " + config.command_prefix + "incorrect"), user, channel)
+        usage = "Usage: " + config.command_prefix + "incorrect"
+        self.send_notice(usage, user)
         return
     conn = sqlite3.connect('db/ihpbot.sqlite')
     cur = conn.cursor()
@@ -59,7 +63,8 @@ def incorrect(self, user, channel):
     records = cur.fetchall()
     conn.commit()
     if ( len(records) == 0 ):
-        self.send_reply( ("Nothing to mark as incorrect..."), user, channel)
+        message = "Nothing to mark as incorrect..."
+        self.send_notice(message, user)
     elif ( len(records) == 1 ):
         sql = """INSERT INTO incorrect_response
                 (question,answer)
@@ -70,6 +75,7 @@ def incorrect(self, user, channel):
         """
         cur.execute(sql)
         conn.commit()
+    self.send_notice("Done", user)
     print "Oops!"
     cur.close()
 
@@ -77,8 +83,9 @@ def delete_correct(self, user, channel):
     if not self.Admin(user, channel):
         return
     command = (self.command).split()
+    usage = "Usage: " + config.command_prefix + "delete_correct {question|answer} string"
     if ( len(command) < 3 ):
-        self.send_reply( ("Usage: " + config.command_prefix + "delete_correct {question|answer} string"), user, channel)
+        self.send_notice(usage, user)
         return
     conn = sqlite3.connect('db/ihpbot.sqlite')
     cur = conn.cursor()
@@ -87,7 +94,7 @@ def delete_correct(self, user, channel):
     elif ( command[1].lower() == 'answer' ):
         delete_what = 'answer'
     else:
-        self.send_reply( ("Usage: " + config.command_prefix + "delete_correct {question|answer} string"), user, channel)
+        self.send_notice(usage, user)
         return
     request = " ".join(command[2:])
     sql = """SELECT uid,"""+delete_what+""" FROM correct_response
@@ -97,24 +104,25 @@ def delete_correct(self, user, channel):
     records = cur.fetchall()
     conn.commit()
     if ( len(records) == 0 ):
-        self.send_reply( ("Nothing found..."), user, channel)
+        self.send_notice("Nothing found...", user)
     elif ( len(records) == 1 ):
-        #todo: use NOTICE instead of send_reply
         sql = """DELETE FROM correct_response
-                WHERE uid = """+records[0][0]+"""
+                WHERE uid = """+str(records[0][0])+"""
         """
         cur.execute(sql)
         conn.commit()
-        self.send_reply( ("Removed entry where " + delete_what + " is: " + records[0][1].replace("''","'")), user, channel)
+        message = "Removed entry where " + delete_what + " is: " + records[0][1].replace("''","'")
+        self.send_notice(message, user)
     else:
-        self.send_reply( ("Too many matches..."), user, channel)
+        self.send_notice("Too many matches...", user)
 
 def delete_incorrect(self, user, channel):
     if not self.Admin(user, channel):
         return
     command = (self.command).split()
+    usage = "Usage: " + config.command_prefix + "delete_incorrect {question|answer} string"
     if ( len(command) < 3 ):
-        self.send_reply( ("Usage: " + config.command_prefix + "delete_incorrect {question|answer} string"), user, channel)
+        self.send_notice(usage, user)
         return
     conn = sqlite3.connect('db/ihpbot.sqlite')
     cur = conn.cursor()
@@ -123,7 +131,7 @@ def delete_incorrect(self, user, channel):
     elif ( command[1].lower() == 'answer' ):
         delete_what = 'answer'
     else:
-        self.send_reply( ("Usage: " + config.command_prefix + "delete_incorrect {question|answer} string"), user, channel)
+        self.send_notice(usage, user)
         return
     request = " ".join(command[2:])
     sql = """SELECT uid,"""+delete_what+""" FROM incorrect_response
@@ -133,24 +141,25 @@ def delete_incorrect(self, user, channel):
     records = cur.fetchall()
     conn.commit()
     if ( len(records) == 0 ):
-        self.send_reply( ("Nothing found..."), user, channel)
+        self.send_notice("Nothing found...", user)
     elif ( len(records) == 1 ):
-        #todo: use NOTICE instead of send_reply
         sql = """DELETE FROM incorrect_response
-                WHERE uid = """+records[0][0]+"""
+                WHERE uid = """+str(records[0][0])+"""
         """
         cur.execute(sql)
         conn.commit()
-        self.send_reply( ("Removed entry where " + delete_what + " is: " + records[0][1].replace("''","'")), user, channel)
+        message = "Removed entry where " + delete_what + " is: " + records[0][1].replace("''","'")
+        self.send_notice(message, user)
     else:
-        self.send_reply( ("Too many matches..."), user, channel)
+        self.send_notice("Too many matches...", user)
 
 def add_correct(self, user, channel):
     if not self.Admin(user, channel):
         return
     command = (self.command).split()
     if ( len(command) < 3 ):
-        self.send_reply( ("Usage: " + config.command_prefix + "add_correct {question} {answer}"), user, channel)
+        message = "Usage: " + config.command_prefix + "add_correct {question} {answer}"
+        self.send_notice(message, user)
         return
     try:
         question_answer = " ".join(command[1:])
@@ -170,7 +179,7 @@ def add_correct(self, user, channel):
     """
     cur.execute(sql)
     conn.commit()
-    print "add_correct(): Added successfully"
+    self.send_notice("Done", user)
     cur.close()
     
 
@@ -179,7 +188,8 @@ def add_incorrect(self, user, channel):
         return
     command = (self.command).split()
     if ( len(command) < 3 ):
-        self.send_reply( ("Usage: " + config.command_prefix + "add_incorrect {question} {answer}"), user, channel)
+        message = "Usage: " + config.command_prefix + "add_incorrect {question} {answer}"
+        self.send_notice(message, user)
         return
     try:
         question_answer = " ".join(command[1:])
@@ -199,7 +209,7 @@ def add_incorrect(self, user, channel):
     """
     cur.execute(sql)
     conn.commit()
-    print "add_incorrect(): Added successfully"
+    self.send_notice("Done", user)
     cur.close()
 
 def help(self, user, channel):
