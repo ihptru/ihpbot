@@ -17,8 +17,8 @@ import sqlite3
 import config
 
 def correct(self, user, channel):
-    if not self.Admin(user, channel):
-        return
+    #if not self.Admin(user, channel):
+    #    return
     command = (self.command).split()
     if ( len(command) > 1 ):
         usage = "Usage: " + config.command_prefix + "correct"
@@ -39,7 +39,7 @@ def correct(self, user, channel):
                 (question,answer)
                 VALUES
                 (
-                '"""+records[0][0].replace("'","''")+"""','"""+records[0][1].replace("'","''")+"""'
+                '"""+records[0][0]+"""','"""+records[0][1]+"""'
                 )
         """
         cur.execute(sql)
@@ -48,8 +48,8 @@ def correct(self, user, channel):
     cur.close()
 
 def incorrect(self, user, channel):
-    if not self.Admin(user, channel):
-        return
+    #if not self.Admin(user, channel):
+    #    return
     command = (self.command).split()
     if ( len(command) > 1 ):
         usage = "Usage: " + config.command_prefix + "incorrect"
@@ -70,18 +70,17 @@ def incorrect(self, user, channel):
                 (question,answer)
                 VALUES
                 (
-                '"""+records[0][0].replace("'","''")+"""','"""+records[0][1].replace("'","''")+"""'
+                '"""+records[0][0]+"""','"""+records[0][1]+"""'
                 )
         """
         cur.execute(sql)
         conn.commit()
     self.send_notice("Done", user)
-    print "Oops!"
     cur.close()
 
 def delete_correct(self, user, channel):
-    if not self.Admin(user, channel):
-        return
+    #if not self.Admin(user, channel):
+    #    return
     command = (self.command).split()
     usage = "Usage: " + config.command_prefix + "delete_correct {question|answer} string"
     if ( len(command) < 3 ):
@@ -98,7 +97,7 @@ def delete_correct(self, user, channel):
         return
     request = " ".join(command[2:])
     sql = """SELECT uid,"""+delete_what+""" FROM correct_response
-            WHERE upper("""+delete_what+""") LIKE upper('%"""+request.replace("'","''")+"""%')  
+            WHERE upper("""+delete_what+""") LIKE upper('%"""+request+"""%')  
     """
     cur.execute(sql)
     records = cur.fetchall()
@@ -111,14 +110,14 @@ def delete_correct(self, user, channel):
         """
         cur.execute(sql)
         conn.commit()
-        message = "Removed entry where " + delete_what + " is: " + records[0][1].replace("''","'")
+        message = "Removed entry where " + delete_what + " is: " + str(records[0][1])
         self.send_notice(message, user)
     else:
         self.send_notice("Too many matches...", user)
 
 def delete_incorrect(self, user, channel):
-    if not self.Admin(user, channel):
-        return
+    #if not self.Admin(user, channel):
+    #    return
     command = (self.command).split()
     usage = "Usage: " + config.command_prefix + "delete_incorrect {question|answer} string"
     if ( len(command) < 3 ):
@@ -135,7 +134,7 @@ def delete_incorrect(self, user, channel):
         return
     request = " ".join(command[2:])
     sql = """SELECT uid,"""+delete_what+""" FROM incorrect_response
-            WHERE upper("""+delete_what+""") LIKE upper('%"""+request.replace("'","''")+"""%')  
+            WHERE upper("""+delete_what+""") LIKE upper('%"""+request+"""%')  
     """
     cur.execute(sql)
     records = cur.fetchall()
@@ -148,14 +147,14 @@ def delete_incorrect(self, user, channel):
         """
         cur.execute(sql)
         conn.commit()
-        message = "Removed entry where " + delete_what + " is: " + records[0][1].replace("''","'")
+        message = "Removed entry where " + delete_what + " is: " + str(records[0][1])
         self.send_notice(message, user)
     else:
         self.send_notice("Too many matches...", user)
 
 def add_correct(self, user, channel):
-    if not self.Admin(user, channel):
-        return
+    #if not self.Admin(user, channel):
+    #    return
     command = (self.command).split()
     if ( len(command) < 3 ):
         message = "Usage: " + config.command_prefix + "add_correct {question} {answer}"
@@ -170,6 +169,15 @@ def add_correct(self, user, channel):
         return
     conn = sqlite3.connect('db/ihpbot.sqlite')
     cur = conn.cursor()
+    sql = """SELECT answer FROM correct_response
+            WHERE answer = '"""+answer+"""' AND question = '"""+question+"""'
+    """
+    cur.execute(sql)
+    records = cur.fetchall()
+    conn.commit()
+    if ( len(records) != 0 ):
+        self.send_notice("Record already exists", user)
+        return
     sql = """INSERT INTO correct_response
             (question,answer)
             VALUES
@@ -181,11 +189,10 @@ def add_correct(self, user, channel):
     conn.commit()
     self.send_notice("Done", user)
     cur.close()
-    
 
 def add_incorrect(self, user, channel):
-    if not self.Admin(user, channel):
-        return
+    #if not self.Admin(user, channel):
+    #    return
     command = (self.command).split()
     if ( len(command) < 3 ):
         message = "Usage: " + config.command_prefix + "add_incorrect {question} {answer}"
@@ -200,6 +207,15 @@ def add_incorrect(self, user, channel):
         return
     conn = sqlite3.connect('db/ihpbot.sqlite')
     cur = conn.cursor()
+    sql = """SELECT answer FROM incorrect_response
+            WHERE answer = '"""+answer+"""' AND question = '"""+question+"""'
+    """
+    cur.execute(sql)
+    records = cur.fetchall()
+    conn.commit()
+    if ( len(records) != 0 ):
+        self.send_notice("Record already exists", user)
+        return
     sql = """INSERT INTO incorrect_response
             (question,answer)
             VALUES

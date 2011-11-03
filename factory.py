@@ -34,13 +34,12 @@ if not os.path.exists('db/ihpbot.sqlite'):
 class Bot(irc.IRCClient):
     def __init__(self):
         self.command = ""
-        self.got_names = ""
     
     def names(self, channel):
         self.sendLine('NAMES %s' % channel)
 
     def irc_RPL_NAMREPLY(self, *nargs):
-        self.got_names = nargs[1][-1]
+        print(nargs)
 
     def _get_nickname(self):
         return self.factory.nickname
@@ -61,13 +60,18 @@ class Bot(irc.IRCClient):
 
     def send_notice(self, data, user):
         self.sendLine( ("NOTICE %s :%s")  % (user,data))
+        print "NOTICE to " + user + ": " + data
 
     def privmsg(self, user, channel, msg):
         username = user.split('!')[0]
         print username + ": " + msg
         if ( msg[0] == config.command_prefix ):
-            self.command = msg[1:]
+            self.command = msg[1:].replace("'","''")
             self.process_command(username, ( channel ))
+
+    def process_command(self, user, channel):
+        command = (self.command).split()
+        self.evalCommand(command[0].lower(), user, channel)
 
     def evalCommand(self, commandname, user, channel):
         imp.reload(commands)
@@ -75,14 +79,9 @@ class Bot(irc.IRCClient):
         if command_function != None:
             if inspect.isfunction(command_function):
                 command_function(self, user, channel)
-    
-    def process_command(self, user, channel):
-        command = (self.command).split()
-        self.evalCommand(command[0].lower(), user, channel)
-    
+
     def Admin(self, user, channel):
         self.names(channel)
-        nicklist = self.got_names.split()
         if ( '+'+user in nicklist or '@'+user in nicklist or '%'+user in nicklist ):
             return True
         else:
@@ -104,5 +103,5 @@ class BotFactory(protocol.ClientFactory):
         print "Connection failed. Reason: %s" % reason
 
 if __name__ == "__main__":
-    reactor.connectTCP(config.server, config.port, BotFactory(config.channels.split(',')))
+    reactor.connectTCP(config.server, config.port, BotFactory(config.channels.split()))
     reactor.run()

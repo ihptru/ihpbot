@@ -3,3 +3,5 @@
 ./factory.py
 
 ###
+
+Depends on twisted and twisted-words
