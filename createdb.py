@@ -14,26 +14,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import sqlite3
 import config
 
-def start():
-    try:
-        os.mkdir("db")
-        os.chmod("db", 0o700)
-    except:
-        print("Error! Can not create a directory, check permissions and try again")
-        return
+def start(self):
     print("Creating databases")
-    msgs()
-    last_answer()
-    correct_response()
-    incorrect_response()
+    conn, cur = self.db_data()
+    msgs(conn, cur)
+    last_answer(conn, cur)
+    correct_response(conn, cur)
+    incorrect_response(conn, cur)
+    cur.close()
 
-def msgs():
-    conn = sqlite3.connect('db/ihpbot.sqlite')
-    cur = conn.cursor()
-    for channel in config.channels.replace('#','').split(','):
+def msgs(conn, cur):
+    for channel in config.channels.replace('#','').split():
         print "..."
         sql = """CREATE TABLE "msg_"""+channel+"""" (
             uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
@@ -42,12 +35,9 @@ def msgs():
         """
         cur.execute(sql)
         conn.commit()
-    cur.close()
 
-def last_answer():
+def last_answer(conn, cur):
     print "..."
-    conn = sqlite3.connect('db/ihpbot.sqlite')
-    cur = conn.cursor()
     sql = """CREATE TABLE last_answer (
         uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
         question VARCHAR NOT NULL,
@@ -56,12 +46,9 @@ def last_answer():
     """
     cur.execute(sql)
     conn.commit()
-    cur.close()
 
-def correct_response():
+def correct_response(conn, cur):
     print "..."
-    conn = sqlite3.connect('db/ihpbot.sqlite')
-    cur = conn.cursor()
     sql = """CREATE TABLE correct_response (
         uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
         question VARCHAR NOT NULL,
@@ -70,12 +57,9 @@ def correct_response():
     """
     cur.execute(sql)
     conn.commit()
-    cur.close()
 
-def incorrect_response():
+def incorrect_response(conn, cur):
     print "..."
-    conn = sqlite3.connect('db/ihpbot.sqlite')
-    cur = conn.cursor()
     sql = """CREATE TABLE incorrect_response (
         uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
         question VARCHAR NOT NULL,
@@ -84,4 +68,3 @@ def incorrect_response():
     """
     cur.execute(sql)
     conn.commit()
-    cur.close()

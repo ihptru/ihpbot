@@ -21,20 +21,23 @@ import inspect
 from twisted.internet import reactor, protocol
 from twisted.words.protocols import irc
 import time
+import sqlite3
 
 import config
 import createdb
 import commands
 
-###
-if not os.path.exists('db/ihpbot.sqlite'):
-    createdb.start()
-###
-
 class Bot(irc.IRCClient):
     def __init__(self):
+        if not os.path.exists('db/ihpbot.sqlite'):
+            createdb.start(self)
         self.command = ""
-    
+
+    def db_data(self):
+        conn = sqlite3.connect('db/ihpbot.sqlite')
+        cur = conn.cursor()
+        return (conn, cur)
+
     def names(self, channel):
         self.sendLine('NAMES %s' % channel)
 
@@ -68,6 +71,21 @@ class Bot(irc.IRCClient):
         if ( msg[0] == config.command_prefix ):
             self.command = msg[1:].replace("'","''")
             self.process_command(username, ( channel ))
+        if ( channel.startswith('#') ):
+            conn, cur = self.db_data()
+            print channel
+            print msg
+            print username
+            sql = """INSERT INTO "msg_"""+channel.replace('#','')+""""
+                    (message)
+                    VALUES
+                    (
+                    '"""+msg+"""'
+                    )
+            """
+            cur.execute(sql)
+            conn.commit()
+            cur.close()
 
     def process_command(self, user, channel):
         command = (self.command).split()
@@ -103,5 +121,13 @@ class BotFactory(protocol.ClientFactory):
         print "Connection failed. Reason: %s" % reason
 
 if __name__ == "__main__":
+    try:
+        os.mkdir("db")
+        os.chmod("db", 0o700)
+    except OSError as e:
+        if e.args[0]==17:   #Directory already exists
+            pass    #Ignore
+        else:
+            raise e #Raise exception again
     reactor.connectTCP(config.server, config.port, BotFactory(config.channels.split()))
     reactor.run()
