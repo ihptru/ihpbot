@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2011 Popov Igor
 #
@@ -16,118 +16,143 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import imp
-import inspect
-from twisted.internet import reactor, protocol
-from twisted.words.protocols import irc
+import socket
 import time
 import sqlite3
+import re
 
 import config
 import createdb
 import commands
 
-class Bot(irc.IRCClient):
-    def __init__(self):
-        if not os.path.exists('db/ihpbot.sqlite'):
-            createdb.start(self)
+class IRC:
+    
+    def __init__(self, conf_conn, host, port, nickname, channels, prefix, nickserv, nickserv_pw):
+        self.irc_host = host
+        self.irc_port = port
+        self.irc_nick = nickname
+        self.prefix = prefix
+        self.channels = channels
+        self.conf_conn = conf_conn
+        self.nickserv = nickserv
+        self.nickserv_pw = nickserv_pw
+        self.irc_sock = socket.socket ( socket.AF_INET, socket.SOCK_STREAM )
         self.command = ""
+        self.start_time = time.mktime(time.strptime( time.strftime('%Y-%m-%d-%H-%M-%S'), '%Y-%m-%d-%H-%M-%S'))
+        self.connected = False
+
+    def ircbot(self):
+        if not os.path.exists('db/'+self.conf_conn+'.sqlite'):
+            createdb.start(self)
+        while True:
+            #exit codes:
+            # 1 - could not connect to irc server
+            # 2 - excess flood
+            # 3 - manual quit
+            # 4 - nick is in use
+            exit_code = self.connect()
+            if (exit_code == 1):
+                time.sleep(5)
+                continue
+            elif (exit_code == 2):
+                print("[%s] Restarting the bot" % self.conf_conn)
+                time.sleep(5)
+                self.irc_sock.close()
+                continue
+            elif (exit_code == 3):
+                print("[%s] Exit" % self.conf_conn)
+                break
+            else:
+                break
+
+    def connect(self):
+        try:
+            self.irc_sock.connect ((self.irc_host, self.irc_port))
+            self.connected = True
+        except:
+            print (("Error: Could not connect to IRC; Host: %s Port: %s")  % (self.irc_host, self.irc_port))
+            return 1
+        print (("[%s] Connected to: %s:%s") % (self.conf_conn, self.irc_host, self.irc_port))
+
+        def set_bot(self):
+            str_buff = ("NICK %s \r\n") % (self.irc_nick)
+            self.irc_sock.send (str_buff.encode())
+            print (("[%s] Setting bot nick to %s") % (self.conf_conn, self.irc_nick))
+
+            str_buff = ("USER %s 8 * :X\r\n") % (self.irc_nick)
+            self.irc_sock.send (str_buff.encode())
+            print (("[%s] Setting User") % (self.conf_conn))
+
+            for channel in self.channels.split():
+                str_buff = ( "JOIN %s \r\n" ) % (channel)
+                self.irc_sock.send (str_buff.encode())
+                print (("[%s] Joining channel %s") % (self.conf_conn, channel))
+
+            if self.nickserv == True:
+                print (("[%s] Sending request to identify with NickServ...") % (self.conf_conn))
+                data = "identify "+self.nickserv_pw
+                self.irc_sock.send ( (("PRIVMSG %s :%s\r\n") % ('NickServ', data)).encode() )
+
+        set_bot(self)
+
+        while True:
+            exit_code = self.listen()
+            if (exit_code == 4):
+                self.irc_nick = self.irc_nick + "_"
+                set_bot(self)
+                continue
+            elif (exit_code == 3):
+                return 3
+            elif (exit_code == 2):
+                return 2
+            else:
+                return 0
+
+    def listen(self):
+        while self.connected:
+            recv = self.irc_sock.recv( 4096 )
+            recv = self.decode_stream(recv)
+            data = self.handle_recv(str(recv))
+            for recv in data:
+                if recv.find ( "PING" ) != -1:
+                    self.irc_sock.send ( ("PONG " + recv.split()[1] + "\r\n").encode() )
+        return 0
+
+    def decode_stream(self, stream):
+        try:
+            return stream.decode("utf8")
+        except:
+            return stream.decode("CP1252")
+
+    #handle as single line request as multiple ( split recv into pieces before processing it )
+    def handle_recv(self, recv):
+        regex = re.compile('(.*?)\r\n')
+        recv = regex.findall(recv)
+        return recv
 
     def db_data(self):
-        conn = sqlite3.connect('db/ihpbot.sqlite')
+        conn = sqlite3.connect('db/'+self.conf_conn+'.sqlite')   # connect to database
         cur = conn.cursor()
         return (conn, cur)
 
-    def names(self, channel):
-        self.sendLine('NAMES %s' % channel)
-
-    def irc_RPL_NAMREPLY(self, *nargs):
-        print(nargs)
-
-    def _get_nickname(self):
-        return self.factory.nickname
-    nickname = property(_get_nickname)
-
-    def signedOn(self):
-        print "Signed on as %s." % self.nickname
-        for channel in self.factory.channels:
-            self.join(channel)
-
-    def joined(self, channel):
-        print "Joined %s." % channel
-
-    def send_reply(self, data, user, channel):
-        target = channel if channel.startswith('#') else user
-        self.msg(target, data)
-        print config.nickname + " > (" + target + "): " + data
-
-    def send_notice(self, data, user):
-        self.sendLine( ("NOTICE %s :%s")  % (user,data))
-        print "NOTICE to " + user + ": " + data
-
-    def privmsg(self, user, channel, msg):
-        username = user.split('!')[0]
-        print username + ": " + msg
-        if ( msg[0] == config.command_prefix ):
-            self.command = msg[1:].replace("'","''")
-            self.process_command(username, ( channel ))
-        if ( channel.startswith('#') ):
-            conn, cur = self.db_data()
-            print channel
-            print msg
-            print username
-            sql = """INSERT INTO "msg_"""+channel.replace('#','')+""""
-                    (message)
-                    VALUES
-                    (
-                    '"""+msg+"""'
-                    )
-            """
-            cur.execute(sql)
-            conn.commit()
-            cur.close()
-
-    def process_command(self, user, channel):
-        command = (self.command).split()
-        self.evalCommand(command[0].lower(), user, channel)
-
-    def evalCommand(self, commandname, user, channel):
-        imp.reload(commands)
-        command_function=getattr(commands, commandname, None)
-        if command_function != None:
-            if inspect.isfunction(command_function):
-                command_function(self, user, channel)
-
-    def Admin(self, user, channel):
-        self.names(channel)
-        if ( '+'+user in nicklist or '@'+user in nicklist or '%'+user in nicklist ):
-            return True
-        else:
-            self.send_reply( ("No rights!"), user, channel )
-            return False
-
-class BotFactory(protocol.ClientFactory):
-    protocol = Bot
-
-    def __init__(self, channels, nickname=config.nickname):
-        self.channels = channels
-        self.nickname = nickname
-
-    def clientConnectionLost(self, connector, reason):
-        print "Connection lost. Reason: %s" % reason
-        connector.connect()
-
-    def clientConnectionFailed(self, connector, reason):
-        print "Connection failed. Reason: %s" % reason
-
 if __name__ == "__main__":
+    def create_dirs(dirs):
+        for dirname in dirs:
+            try:
+                os.mkdir(dirname)
+                os.chmod(dirname, 0o700)
+            except OSError as e:
+                if e.args[0]==17:   #Directory already exists
+                    pass    #Ignore
+                else:
+                    raise e #Raise exception again
+
+    create_dirs(['db','logs'])
+
+    config_data = eval('config.'+config.servers[0])
+    irc = IRC(config.servers[0], config_data['host'], config_data['port'], config_data['nick'], config_data['channels'], config_data['prefix'], config_data['nickserv'], config_data['nickserv_pw'])
     try:
-        os.mkdir("db")
-        os.chmod("db", 0o700)
-    except OSError as e:
-        if e.args[0]==17:   #Directory already exists
-            pass    #Ignore
-        else:
-            raise e #Raise exception again
-    reactor.connectTCP(config.server, config.port, BotFactory(config.channels.split()))
-    reactor.run()
+        irc.ircbot()
+    except KeyboardInterrupt:
+            print("Exit")
+            exit

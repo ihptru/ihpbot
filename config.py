@@ -1,15 +1,28 @@
-### Server Data ###
-#server to connect
-server = 'irc.freenode.net'
+####################
+## IRC Bot Config ##
+####################
 
-#server port
-port = 6667
+server1 = {
+            # server to connect
+            'host' : 'irc.freenode.net',
 
-#channels to connect to (comma as delimiter)
-channels = '##ihpbot-test-channel #orabot-test-channel'
+            # server port
+            'port' : 6667,
 
-#bot nick
-nickname = 'ihpbot'
+            # channels to connect to (space as delimiter)
+            'channels' : '##ihpbot-test-channel',
 
-#command must start with:
-command_prefix = '%'
+            # bot nick
+            'nick' : 'ihpbot',
+
+            # identify with NickServ? ( True or False )
+            'nickserv' : False,
+
+            # nickserv password
+            'nickserv_pw' : '',
+
+            # commands start with:
+            'prefix' : '%',
+}
+
+servers = ['server1']

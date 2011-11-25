@@ -13,31 +13,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import config
-
 def start(self):
     print("Creating databases")
     conn, cur = self.db_data()
-    msgs(conn, cur)
+    
+    msgs(self, conn, cur)
     last_answer(conn, cur)
     correct_response(conn, cur)
     incorrect_response(conn, cur)
+    
     cur.close()
+    print("Done")
 
-def msgs(conn, cur):
-    for channel in config.channels.replace('#','').split():
-        print "..."
-        sql = """CREATE TABLE "msg_"""+channel+"""" (
+def msgs(self, conn, cur):
+    for channel in self.channels.replace('#','').split():
+        print ("...")
+        sql = """CREATE TABLE "msg_%(channel)s" (
             uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
             message VARCHAR NOT NULL
             )        
-        """
+        """ % vars()
         cur.execute(sql)
         conn.commit()
 
 def last_answer(conn, cur):
-    print "..."
+    print ("...")
     sql = """CREATE TABLE last_answer (
         uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
         question VARCHAR NOT NULL,
@@ -48,7 +48,7 @@ def last_answer(conn, cur):
     conn.commit()
 
 def correct_response(conn, cur):
-    print "..."
+    print ("...")
     sql = """CREATE TABLE correct_response (
         uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
         question VARCHAR NOT NULL,
@@ -59,7 +59,7 @@ def correct_response(conn, cur):
     conn.commit()
 
 def incorrect_response(conn, cur):
-    print "..."
+    print ("...")
     sql = """CREATE TABLE incorrect_response (
         uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
         question VARCHAR NOT NULL,

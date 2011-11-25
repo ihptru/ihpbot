@@ -34,6 +34,7 @@ def correct(self, user, channel):
     if ( len(records) == 0 ):
         message = "Nothing to confirm..."
         self.send_notice(message, user)
+        return
     elif ( len(records) == 1 ):
         sql = """INSERT INTO correct_response
                 (question,answer)
@@ -165,7 +166,7 @@ def add_correct(self, user, channel):
         question = question_answer.split('} {')[0].replace('{','').strip()
         answer = question_answer.split('} {')[1].replace('}','').strip()
     except Exception as e:
-        print "add_correct(): ", e
+        print ("add_correct(): ", e)
         return
     conn = sqlite3.connect('db/ihpbot.sqlite')
     cur = conn.cursor()
@@ -203,7 +204,7 @@ def add_incorrect(self, user, channel):
         question = question_answer.split('} {')[0].replace('{','').strip()
         answer = question_answer.split('} {')[1].replace('}','').strip()
     except Exception as e:
-        print "add_incorrect(): ", e
+        print ("add_incorrect(): ", e)
         return
     conn = sqlite3.connect('db/ihpbot.sqlite')
     cur = conn.cursor()
