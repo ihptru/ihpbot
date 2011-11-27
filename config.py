@@ -25,4 +25,6 @@ server1 = {
             'prefix' : '%',
 }
 
+admin = 'ihptru'
+
 servers = ['server1']

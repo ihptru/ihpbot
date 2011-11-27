@@ -31,7 +31,7 @@ def msgs(self, conn, cur):
         sql = """CREATE TABLE "msg_%(channel)s" (
             uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
             message VARCHAR NOT NULL
-            )        
+            ) 
         """ % vars()
         cur.execute(sql)
         conn.commit()

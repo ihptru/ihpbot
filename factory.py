@@ -20,13 +20,16 @@ import socket
 import time
 import sqlite3
 import re
+import imp
+import inspect
 
 import config
 import createdb
 import commands
+from irc import privmsg
 
 class IRC:
-    
+
     def __init__(self, conf_conn, host, port, nickname, channels, prefix, nickserv, nickserv_pw):
         self.irc_host = host
         self.irc_port = port
@@ -116,7 +119,16 @@ class IRC:
             for recv in data:
                 if recv.find ( "PING" ) != -1:
                     self.irc_sock.send ( ("PONG " + recv.split()[1] + "\r\n").encode() )
+
+                if recv.find ( " PRIVMSG " ):
+                    if ( recv.split()[1] == "PRIVMSG" ):
+                        privmsg.parser(self, recv)
+
         return 0
+
+    def data_to_message(self, data):
+        data = data[data.find(" :")+2:]
+        return data
 
     def decode_stream(self, stream):
         try:
@@ -134,6 +146,32 @@ class IRC:
         conn = sqlite3.connect('db/'+self.conf_conn+'.sqlite')   # connect to database
         cur = conn.cursor()
         return (conn, cur)
+
+    def send_message_to_channel(self, data, channel):
+        print ( ( "[%s] %s: %s") % (self.conf_conn, self.irc_nick, data) )
+        self.irc_sock.send( (("PRIVMSG %s :%s\r\n") % (channel, data[0:512])).encode() )
+        time.sleep(1)
+
+    def send_reply(self, data, user, channel):
+        target = channel if channel.startswith('#') else user
+        self.send_message_to_channel(data,target)
+
+    def Admin(self, user):
+        if user == config.admin:
+            return True
+        else:
+            return False
+
+    def evalCommand(self, commandname, user, channel):
+        imp.reload(commands)
+        command_function=getattr(commands, commandname, None)
+        if command_function != None:
+            if inspect.isfunction(command_function):
+                command_function(self, user, channel)
+
+    def process_command(self, user, channel):
+        command = (self.command).split()
+        self.evalCommand(command[0].lower(), user, channel)
 
 if __name__ == "__main__":
     def create_dirs(dirs):

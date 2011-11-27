@@ -17,8 +17,8 @@ import sqlite3
 import config
 
 def correct(self, user, channel):
-    #if not self.Admin(user, channel):
-    #    return
+    if not self.Admin(user, channel):
+        return
     command = (self.command).split()
     if ( len(command) > 1 ):
         usage = "Usage: " + config.command_prefix + "correct"
@@ -49,8 +49,8 @@ def correct(self, user, channel):
     cur.close()
 
 def incorrect(self, user, channel):
-    #if not self.Admin(user, channel):
-    #    return
+    if not self.Admin(user, channel):
+        return
     command = (self.command).split()
     if ( len(command) > 1 ):
         usage = "Usage: " + config.command_prefix + "incorrect"
@@ -80,8 +80,8 @@ def incorrect(self, user, channel):
     cur.close()
 
 def delete_correct(self, user, channel):
-    #if not self.Admin(user, channel):
-    #    return
+    if not self.Admin(user, channel):
+        return
     command = (self.command).split()
     usage = "Usage: " + config.command_prefix + "delete_correct {question|answer} string"
     if ( len(command) < 3 ):
@@ -117,8 +117,8 @@ def delete_correct(self, user, channel):
         self.send_notice("Too many matches...", user)
 
 def delete_incorrect(self, user, channel):
-    #if not self.Admin(user, channel):
-    #    return
+    if not self.Admin(user, channel):
+        return
     command = (self.command).split()
     usage = "Usage: " + config.command_prefix + "delete_incorrect {question|answer} string"
     if ( len(command) < 3 ):
@@ -154,8 +154,8 @@ def delete_incorrect(self, user, channel):
         self.send_notice("Too many matches...", user)
 
 def add_correct(self, user, channel):
-    #if not self.Admin(user, channel):
-    #    return
+    if not self.Admin(user, channel):
+        return
     command = (self.command).split()
     if ( len(command) < 3 ):
         message = "Usage: " + config.command_prefix + "add_correct {question} {answer}"
@@ -192,8 +192,8 @@ def add_correct(self, user, channel):
     cur.close()
 
 def add_incorrect(self, user, channel):
-    #if not self.Admin(user, channel):
-    #    return
+    if not self.Admin(user, channel):
+        return
     command = (self.command).split()
     if ( len(command) < 3 ):
         message = "Usage: " + config.command_prefix + "add_incorrect {question} {answer}"
