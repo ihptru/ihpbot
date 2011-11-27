@@ -14,18 +14,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sqlite3
-import config
 
 def correct(self, user, channel):
-    if not self.Admin(user, channel):
+    if not self.Admin(user):
         return
     command = (self.command).split()
     if ( len(command) > 1 ):
-        usage = "Usage: " + config.command_prefix + "correct"
+        usage = "Usage: " + self.prefix + "correct"
         self.send_notice(usage, user)
         return
-    conn = sqlite3.connect('db/ihpbot.sqlite')
-    cur = conn.cursor()
+    conn, cur = self.db_data()
     sql = """SELECT question,answer FROM last_answer
     """
     cur.execute(sql)
@@ -49,15 +47,14 @@ def correct(self, user, channel):
     cur.close()
 
 def incorrect(self, user, channel):
-    if not self.Admin(user, channel):
+    if not self.Admin(user):
         return
     command = (self.command).split()
     if ( len(command) > 1 ):
-        usage = "Usage: " + config.command_prefix + "incorrect"
+        usage = "Usage: " + self.prefix + "incorrect"
         self.send_notice(usage, user)
         return
-    conn = sqlite3.connect('db/ihpbot.sqlite')
-    cur = conn.cursor()
+    conn, cur = self.db_data()
     sql = """SELECT question,answer FROM last_answer
     """
     cur.execute(sql)
@@ -66,6 +63,7 @@ def incorrect(self, user, channel):
     if ( len(records) == 0 ):
         message = "Nothing to mark as incorrect..."
         self.send_notice(message, user)
+        return
     elif ( len(records) == 1 ):
         sql = """INSERT INTO incorrect_response
                 (question,answer)
@@ -80,15 +78,14 @@ def incorrect(self, user, channel):
     cur.close()
 
 def delete_correct(self, user, channel):
-    if not self.Admin(user, channel):
+    if not self.Admin(user):
         return
     command = (self.command).split()
-    usage = "Usage: " + config.command_prefix + "delete_correct {question|answer} string"
+    usage = "Usage: " + self.prefix + "delete_correct {question|answer} string"
     if ( len(command) < 3 ):
         self.send_notice(usage, user)
         return
-    conn = sqlite3.connect('db/ihpbot.sqlite')
-    cur = conn.cursor()
+    conn, cur = self.db_data()
     if ( command[1].lower() == 'question' ):
         delete_what = 'question'
     elif ( command[1].lower() == 'answer' ):
@@ -117,15 +114,14 @@ def delete_correct(self, user, channel):
         self.send_notice("Too many matches...", user)
 
 def delete_incorrect(self, user, channel):
-    if not self.Admin(user, channel):
+    if not self.Admin(user):
         return
     command = (self.command).split()
-    usage = "Usage: " + config.command_prefix + "delete_incorrect {question|answer} string"
+    usage = "Usage: " + self.prefix + "delete_incorrect {question|answer} string"
     if ( len(command) < 3 ):
         self.send_notice(usage, user)
         return
-    conn = sqlite3.connect('db/ihpbot.sqlite')
-    cur = conn.cursor()
+    conn, cur = self.db_data()
     if ( command[1].lower() == 'question' ):
         delete_what = 'question'
     elif ( command[1].lower() == 'answer' ):
@@ -154,11 +150,11 @@ def delete_incorrect(self, user, channel):
         self.send_notice("Too many matches...", user)
 
 def add_correct(self, user, channel):
-    if not self.Admin(user, channel):
+    if not self.Admin(user):
         return
     command = (self.command).split()
     if ( len(command) < 3 ):
-        message = "Usage: " + config.command_prefix + "add_correct {question} {answer}"
+        message = "Usage: " + self.prefix + "add_correct {question} {answer}"
         self.send_notice(message, user)
         return
     try:
@@ -168,8 +164,7 @@ def add_correct(self, user, channel):
     except Exception as e:
         print ("add_correct(): ", e)
         return
-    conn = sqlite3.connect('db/ihpbot.sqlite')
-    cur = conn.cursor()
+    conn, cur = self.db_data()
     sql = """SELECT answer FROM correct_response
             WHERE answer = '"""+answer+"""' AND question = '"""+question+"""'
     """
@@ -192,11 +187,11 @@ def add_correct(self, user, channel):
     cur.close()
 
 def add_incorrect(self, user, channel):
-    if not self.Admin(user, channel):
+    if not self.Admin(user):
         return
     command = (self.command).split()
     if ( len(command) < 3 ):
-        message = "Usage: " + config.command_prefix + "add_incorrect {question} {answer}"
+        message = "Usage: " + self.prefix + "add_incorrect {question} {answer}"
         self.send_notice(message, user)
         return
     try:
@@ -206,8 +201,7 @@ def add_incorrect(self, user, channel):
     except Exception as e:
         print ("add_incorrect(): ", e)
         return
-    conn = sqlite3.connect('db/ihpbot.sqlite')
-    cur = conn.cursor()
+    conn, cur = self.db_data()
     sql = """SELECT answer FROM incorrect_response
             WHERE answer = '"""+answer+"""' AND question = '"""+question+"""'
     """

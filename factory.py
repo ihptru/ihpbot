@@ -156,6 +156,12 @@ class IRC:
         target = channel if channel.startswith('#') else user
         self.send_message_to_channel(data,target)
 
+    def send_notice(self, data, user):
+        print ( ( "[%s] NOTICE to %s: %s" ) % (self.irc_host, user, data) )
+        str_buff = ( "NOTICE %s :%s\r\n" ) % (user,data)
+        self.irc_sock.send (str_buff.encode())
+        time.sleep(1)
+
     def Admin(self, user):
         if user == config.admin:
             return True

@@ -38,7 +38,7 @@ def msgs(self, conn, cur):
 
 def last_answer(conn, cur):
     print ("...")
-    sql = """CREATE TABLE last_answer (
+    sql = """CREATE TABLE "last_answer" (
         uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
         question VARCHAR NOT NULL,
         answer VARCHAR NOT NULL
@@ -49,7 +49,7 @@ def last_answer(conn, cur):
 
 def correct_response(conn, cur):
     print ("...")
-    sql = """CREATE TABLE correct_response (
+    sql = """CREATE TABLE "correct_response" (
         uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
         question VARCHAR NOT NULL,
         answer VARCHAR NOT NULL
@@ -60,7 +60,7 @@ def correct_response(conn, cur):
 
 def incorrect_response(conn, cur):
     print ("...")
-    sql = """CREATE TABLE incorrect_response (
+    sql = """CREATE TABLE "incorrect_response" (
         uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
         question VARCHAR NOT NULL,
         answer VARCHAR NOT NULL
