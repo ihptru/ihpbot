@@ -120,7 +120,7 @@ class IRC:
                 if recv.find ( "PING" ) != -1:
                     self.irc_sock.send ( ("PONG " + recv.split()[1] + "\r\n").encode() )
 
-                if recv.find ( " PRIVMSG " ):
+                if recv.find ( " PRIVMSG " ) != -1:
                     if ( recv.split()[1] == "PRIVMSG" ):
                         privmsg.parser(self, recv)
 
