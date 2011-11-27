@@ -17,7 +17,19 @@ def parser(self,  recv):
     irc_user_nick = recv.split ( '!' ) [ 0 ] . split ( ":" ) [ 1 ]
     irc_user_message = self.data_to_message(recv)
     chan = recv.split() [ 2 ]  #channel
+    chan_raw = chan.replace('#','')
     print ( ( "[%s] %s: %s" ) % (self.conf_conn, irc_user_nick, irc_user_message) )
+    conn, cur = self.db_data()
+    sql = """INSERT INTO "msg_%(chan_raw)s"
+            (message)
+            VALUES
+            (
+            '%(irc_user_message)s'
+            )
+    """ % vars()
+    cur.execute(sql)
+    conn.commit()
+    cur.close()
     # Message starts with command prefix?
     if ( irc_user_message != '' ):
         if ( irc_user_message[0] == self.prefix ):
