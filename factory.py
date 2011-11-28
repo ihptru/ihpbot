@@ -16,6 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import io
+import sys
 import socket
 import time
 import sqlite3
@@ -179,12 +181,38 @@ class IRC:
         command = (self.command).split()
         self.evalCommand(command[0].lower(), user, channel)
 
+# a class which works like the shell command "tee"
+class Tee(io.TextIOWrapper):
+    def __init__(self, f1, f2):
+        io.TextIOWrapper.__init__(self, f1)
+        self.f1=f1
+        self.f2=f2
+        self.buffered1=False
+        self.buffered2=False
+    def write(self, text):
+        self.f1.write(text)
+        self.f2.write(text)
+        if not self.buffered1:
+            self.f1.flush()
+        if not self.buffered2:
+            self.f2.flush()
+
+# a class for flushed output
+class FlushFile(io.TextIOWrapper):
+    def __init__(self, f):
+        io.TextIOWrapper.__init__(self, f)
+        self.f=f
+    def write(self, text):
+        self.f.write(text)
+        self.f.flush()
+
 if __name__ == "__main__":
     def create_dirs(dirs):
         for dirname in dirs:
             try:
                 os.mkdir(dirname)
                 os.chmod(dirname, 0o700)
+                print ("Created dir: %s" % dirname)
             except OSError as e:
                 if e.args[0]==17:   #Directory already exists
                     pass    #Ignore
@@ -192,6 +220,13 @@ if __name__ == "__main__":
                     raise e #Raise exception again
 
     create_dirs(['db','logs'])
+
+    logfile="logs/bot.log"
+    log=io.open(logfile,"a")
+
+    sys.stdout=Tee(sys.stdout, log)
+    sys.stderr=FlushFile(sys.stderr)    #Allways flush stderr
+    print("Starting bot. Press ctrl+c to exit.")
 
     config_data = eval('config.'+config.servers[0])
     irc = IRC(config.servers[0], config_data['host'], config_data['port'], config_data['nick'], config_data['channels'], config_data['prefix'], config_data['nickserv'], config_data['nickserv_pw'])
