@@ -35,3 +35,10 @@ def parser(self,  recv):
         if ( irc_user_message[0] == self.prefix ):
             self.command = irc_user_message[1:].replace("'","''")
             self.process_command(irc_user_nick, ( chan ))
+    
+    # Start analysing message
+    analyse(self,  irc_user_message)
+
+def analyse(self, message):
+    pass
+    

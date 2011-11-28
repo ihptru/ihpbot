@@ -126,6 +126,13 @@ class IRC:
                     if ( recv.split()[1] == "PRIVMSG" ):
                         privmsg.parser(self, recv)
 
+                if recv.find ( " NOTICE "+self.irc_nick+" :You are now identified for " ) != -1:
+                    print(("[%s] NickServ Identification Succeeded\t\tOK") % (self.conf_conn))
+
+                if recv.find ( " 433 * "+self.irc_nick+" " ) != -1:
+                    print(("[%s] Nick is already in use!!!") % (self.conf_conn))
+                    return 4
+
         return 0
 
     def data_to_message(self, data):
@@ -164,6 +171,25 @@ class IRC:
         self.irc_sock.send (str_buff.encode())
         time.sleep(1)
 
+    def join_channel(self, channel):
+        if channel.startswith('#'):
+            str_buff = ( "JOIN %s \r\n" ) % (channel)
+            self.irc_sock.send (str_buff.encode())
+            channels = self.channels.split()
+            if ( channels.count(channel) == 0 ):
+                channels.append(channel)
+                self.channels = " ".join(channels)
+                conn,  cur = self.db_data()
+                channel = channel.replace('#','')
+                sql = """CREATE TABLE IF NOT EXISTS "msg_%(channel)s" (
+                    uid INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE,
+                    message VARCHAR NOT NULL
+                    ) 
+                """ % vars()
+                cur.execute(sql)
+                conn.commit()
+                cur.close()
+
     def Admin(self, user):
         if user == config.admin:
             return True
@@ -183,12 +209,14 @@ class IRC:
 
 # a class which works like the shell command "tee"
 class Tee(io.TextIOWrapper):
+    
     def __init__(self, f1, f2):
         io.TextIOWrapper.__init__(self, f1)
         self.f1=f1
         self.f2=f2
         self.buffered1=False
         self.buffered2=False
+
     def write(self, text):
         self.f1.write(text)
         self.f2.write(text)
@@ -199,9 +227,11 @@ class Tee(io.TextIOWrapper):
 
 # a class for flushed output
 class FlushFile(io.TextIOWrapper):
+
     def __init__(self, f):
         io.TextIOWrapper.__init__(self, f)
         self.f=f
+
     def write(self, text):
         self.f.write(text)
         self.f.flush()
@@ -234,4 +264,3 @@ if __name__ == "__main__":
         irc.ircbot()
     except KeyboardInterrupt:
             print("Exit")
-            exit

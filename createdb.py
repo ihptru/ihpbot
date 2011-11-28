@@ -58,6 +58,7 @@ def correct_response(conn, cur):
     cur.execute(sql)
     conn.commit()
 
+# incorrect table has more power above correct one
 def incorrect_response(conn, cur):
     print ("...")
     sql = """CREATE TABLE "incorrect_response" (

@@ -223,6 +223,17 @@ def add_incorrect(self, user, channel):
     self.send_notice("Done", user)
     cur.close()
 
+def join(self, user, channel):
+    if not self.Admin(user):
+        return
+    command = (self.command).split()
+    if ( len(command) == 2 ):
+        if ( (command[1])[0] == "#"):
+            irc_channel = command[1]
+        else:
+            irc_channel = "#" + command[1]
+        self.join_channel(irc_channel)
+
 def help(self, user, channel):
     command = (self.command).split()
     if ( len(command) == 1 ):
