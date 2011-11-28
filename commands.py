@@ -215,7 +215,7 @@ def add_incorrect(self, user, channel):
             (question,answer)
             VALUES
             (
-            '"""+question+"""','"""+answer+"""'
+            '"""+question.lower()+"""','"""+answer.lower()+"""'
             )
     """
     cur.execute(sql)

@@ -39,12 +39,40 @@ def parser(self,  recv):
             self.process_command(irc_user_nick, ( chan ))
     
     # Start analysing message
-    analyse(self,  irc_user_message.replace("'", "''"))
+    analyse(self, chan, irc_user_message.replace("'", "''").lower())
 
-def analyse(self, message):
+def analyse(self, channel, message):
     
-    def check_incorrect(self,  conn,  cur,  question,  answer):
-        pass
+    def check_incorrect(self, channel, conn,  cur,  question,  answer):
+        # check if for 'this' question with 'this' answer there is already record in `incorrect_response` table
+        q_words = question.split()
+        len_q_words = float(len(q_words))
+        a_words = answer.split()
+        len_a_words = float(len(a_words))
+        
+        sql = """SELECT question,answer FROM incorrect_response
+        """
+        cur.execute(sql)
+        records = cur.fetchall()
+        conn.commit()
+        for i in range(len(records)):
+            qmatch = 0
+            in_question = records[i][0]
+            for qword in q_words:
+                if qword in in_question.split():
+                    qmatch += 1
+                if qmatch != 0:
+                    if 100/len_q_words*qmatch >= 80 and 100.0/len(in_question.split())*len_q_words >= 65:
+                        amatch = 0
+                        in_answer = records[i][1]
+                        for aword in a_words:
+                            if aword in in_answer.split():
+                                amatch += 1
+                            if amatch != 0:
+                                if 100/len_a_words*amatch >= 80 and 100.0/len(in_answer.split())*len_a_words >= 65:
+                                    return  # found question + answer in `incorrect_response` table
+        # still working? show answer on a channel
+        self.send_message_to_channel((answer),  channel)
 
     def check_tables(self,  conn,  cur,  message):
         for channel in self.channels.split():
@@ -79,13 +107,13 @@ def analyse(self, message):
                 if word in question.split():
                     match += 1
             if match != 0:
-                if amount_words/100*match >= 0.8:
-                    answer = records[i][1]
-                    raise GetOutOfLoop
+                if 100/amount_words*match >= 80 and 100.0/len(question.split())*amount_words >= 65:
+                        answer = records[i][1]
+                        raise GetOutOfLoop
     except GetOutOfLoop:
         pass
 
     if ( answer != '' ):    # found match in `correct_response` table
-        check_incorrect(self,  conn,  cur,  question,  answer)
+        check_incorrect(self, channel, conn,  cur,  question,  answer)
     else:   # nothing found in `correct_response` table, go on checking channel tables
         check_tables(self,  conn,  cur,  message)
